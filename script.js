@@ -3,10 +3,16 @@ const ctx = canvas.getContext('2d');
 const hpValueElement = document.getElementById('hp-value');
 
 // Game settings
-const CANVAS_WIDTH = 800;
-const CANVAS_HEIGHT = 600;
+let CANVAS_WIDTH = window.innerWidth;
+let CANVAS_HEIGHT = window.innerHeight;
 canvas.width = CANVAS_WIDTH;
 canvas.height = CANVAS_HEIGHT;
+window.addEventListener('resize', () => {
+  CANVAS_WIDTH = window.innerWidth;
+  CANVAS_HEIGHT = window.innerHeight;
+  canvas.width = CANVAS_WIDTH;
+  canvas.height = CANVAS_HEIGHT;
+})
 
 let playerHP = 3;
 const PLAYER_SPEED = 5;
