@@ -228,9 +228,13 @@ function attemptDash() {
     let dashAngle = 0; // Default to right if no movement keys are pressed
 
     if (keys['w'] || keys['ArrowUp']) {
-      dashAngle = Math.PI * 1.5; // Up
+      if (keys['a'] || keys['ArrowLeft']) dashAngle = Math.PI * 1.75; // Up-Left
+      else if (keys['d'] || keys['ArrowRight']) dashAngle = Math.PI * 0.25; // Up-Right
+      else dashAngle = Math.PI * 1.5; // Up
     } else if (keys['s'] || keys['ArrowDown']) {
-      dashAngle = Math.PI * 0.5; // Down
+      if (keys['a'] || keys['ArrowLeft']) dashAngle = Math.PI * 1.25; // Down-Left
+      else if (keys['d'] || keys['ArrowRight']) dashAngle = Math.PI * 0.75; // Down-Right
+      else dashAngle = Math.PI * 0.5; // Down
     } else if (keys['a'] || keys['ArrowLeft']) {
       dashAngle = Math.PI; // Left
     } else if (keys['d'] || keys['ArrowRight']) {
