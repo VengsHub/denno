@@ -1,0 +1,29 @@
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f0f0f0;
+    margin: 0;
+    font-family: sans-serif;
+}
+
+#game-container {
+    position: relative;
+    border: 2px solid black;
+}
+
+#gameCanvas {
+    display: block; /* Removes extra space below canvas */
+}
+
+#hp-counter {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 24px;
+    color: black;
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 5px 10px;
+    border-radius: 5px;
+}
