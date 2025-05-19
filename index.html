@@ -7,9 +7,12 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<video autoplay muted loop id="myVideo">
+  <source src="assets/bg_render.mp4" type="video/mp4">
+</video>
 <div id="game-container">
   <div id="hp-counter">HP: <span id="hp-value">3</span></div>
-  <canvas id="gameCanvas" style="background-image: url('./assets/pink_cell_background_loop.apng')"></canvas>
+  <canvas id="gameCanvas"></canvas>
 </div>
 <script src="script.js"></script>
 </body>
