@@ -25,10 +25,17 @@ body {
     display: block; /* Removes extra space below canvas */
 }
 
-#hp-counter {
+#ui-top {
     position: absolute;
     top: 10px;
     left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: space-between;
+    z-index: 10; /* Ensure UI is above canvas elements if needed */
+}
+
+#hp-counter, #score-counter {
     font-size: 24px;
     color: black;
     background-color: rgba(255, 255, 255, 0.7);
