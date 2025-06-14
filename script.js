@@ -226,8 +226,8 @@ function render() {
 }
 
 // --- Main Game Loop ---
-function gameLoop(currentTime) {
-  update(currentTime);
+function gameLoop() {
+  update(Date.now());
   render();
   requestAnimationFrame(gameLoop);
 }
