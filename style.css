@@ -3,28 +3,79 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-color: #f0f0f0;
+    background-color: #1a1a1a;
     margin: 0;
-    font-family: sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: white;
+    overflow: hidden; /* Prevent scrollbars from appearing */
 }
 
 #game-container {
-    position: relative;
-    border: 2px solid black;
+    position: relative; /* Crucial for positioning game objects inside */
+    width: 800px;
+    height: 600px;
+    background-image: url("assets/background.png");
+    border: 2px solid #555;
+    overflow: hidden; /* Objects that leave the container will be hidden */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
 }
 
-#myVideo {
-    position: fixed;
-    right: 0;
-    bottom: 0;
-    min-width: 100%;
-    min-height: 100%;
+.game-object {
+    position: absolute;
+    /* We use transform for positioning for performance.
+       Will be set by JS: transform: translate(x, y); */
+    /* Center the transform origin */
+    left: 0;
+    top: 0;
+    will-change: transform; /* Hint to the browser for optimization */
 }
 
-#gameCanvas {
-    display: block; /* Removes extra space below canvas */
+#player {
+    width: 50px;
+    height: 50px;
+    z-index: 100;
 }
 
+/* Shield visual using a pseudo-element */
+#player::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0); /* Initially hidden */
+    width: 150%;
+    height: 150%;
+    background-color: rgba(173, 216, 230, 0.3);
+    border: 2px solid rgba(173, 216, 230, 0.7);
+    border-radius: 50%;
+    transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+    opacity: 0;
+    z-index: -1;
+}
+
+#player.shielding::after {
+    transform: translate(-50%, -50%) scale(1); /* Scale up to be visible */
+    opacity: 1;
+}
+
+.enemy {
+    width: 55px;
+    height: 55px;
+    z-index: 50;
+    /* Optional filter for a 'blood cell' look */
+    filter: saturate(1.5) contrast(1.1);
+}
+
+.laser {
+    width: 40px;
+    height: 4px;
+    background-color: yellow;
+    border-radius: 2px;
+    box-shadow: 0 0 10px yellow;
+    z-index: 90;
+}
+
+/* UI Styling */
 #ui-top {
     position: absolute;
     top: 10px;
@@ -32,13 +83,61 @@ body {
     right: 10px;
     display: flex;
     justify-content: space-between;
-    z-index: 10; /* Ensure UI is above canvas elements if needed */
+    z-index: 200;
+    pointer-events: none; /* Make sure UI doesn't block clicks/interactions if any */
 }
 
 #hp-counter, #score-counter {
     font-size: 24px;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 5px 15px;
+    border-radius: 8px;
+    text-shadow: 1px 1px 2px black;
+}
+
+/* Game Over Screen Styling */
+#game-over-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 300;
+    text-align: center;
+}
+
+#game-over-screen h1 {
+    font-size: 4rem;
+    color: #ff4d4d;
+    margin: 0;
+}
+
+#game-over-screen p {
+    font-size: 1.5rem;
+    margin: 10px 0 30px;
+}
+
+#restart-button {
+    font-size: 1.2rem;
+    padding: 10px 30px;
+    border: 2px solid white;
+    background-color: transparent;
+    color: white;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+#restart-button:hover {
+    background-color: white;
     color: black;
-    background-color: rgba(255, 255, 255, 0.7);
-    padding: 5px 10px;
-    border-radius: 5px;
+}
+
+.hidden {
+    display: none !important;
 }

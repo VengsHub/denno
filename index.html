@@ -3,20 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sperm Game</title>
+  <title>Sperm Game - DOM Edition</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<video autoplay muted loop id="myVideo">
-  <source src="assets/bg_render.mp4" type="video/mp4">
-</video>
 <div id="game-container">
+  <video id="player" class="game-object" autoplay loop muted playsinline>
+    <source src="assets/sperm.webm" type="video/webm">
+  </video>
+
   <div id="ui-top">
     <div id="hp-counter">HP: <span id="hp-value">3</span></div>
     <div id="score-counter">Score: <span id="score-value">0</span></div>
   </div>
-  <canvas id="gameCanvas"></canvas>
+
+  <div id="game-over-screen" class="hidden">
+    <h1>GAME OVER</h1>
+    <p>Final Score: <span id="final-score">0</span></p>
+    <button id="restart-button">Restart</button>
+  </div>
 </div>
-<script src="script.js"></script>
+
+<script src="script.js" type="module"></script>
 </body>
 </html>
