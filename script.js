@@ -8,7 +8,7 @@ const finalScoreElement = document.getElementById('final-score');
 const restartButton = document.getElementById('restart-button');
 
 // --- Game Settings ---
-const GAME_WIDTH = 800;
+const GAME_WIDTH = 1600;
 const GAME_HEIGHT = 600;
 
 // Player Settings (adjusted to pixels per second)
