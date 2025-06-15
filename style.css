@@ -53,9 +53,9 @@ body {
     z-index: -1;
 }
 
-#player.shielding::after {
-    transform: translate(-50%, -50%) scale(1); /* Scale up to be visible */
-    opacity: 1;
+#player.shielding {
+    border-radius: 50%;
+    background-color: rgba(0, 0, 255, 0.5);
 }
 
 .enemy {

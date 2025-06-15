@@ -31,7 +31,6 @@ let gameRunning = true;
 let lastFrameTime = 0; // To calculate delta time
 const MIN_UPDATE_INTERVAL = 50; // Minimum time in ms between game state updates (0.1 seconds)
 
-
 let player = {
   element: playerElement,
   x: 70,
@@ -127,15 +126,20 @@ class Enemy {
       // Check for dash action
       if (Date.now() > this.lastActionCheck + this.actionCooldown) { // Using Date.now() for time checks
         this.lastActionCheck = Date.now();
-        if (distance(this.x, this.y, this.player.x, this.player.y) < this.proximityTriggerDist) {
+        if (distance(this.x, this.y, this.player.x, this.player.y)
+          < this.proximityTriggerDist) {
           this.initiateDash(Date.now());
         }
       }
     }
 
     // --- Keep in bounds vertically ---
-    if (this.y - this.radius < 0) this.y = this.radius;
-    if (this.y + this.radius > GAME_HEIGHT) this.y = GAME_HEIGHT - this.radius;
+    if (this.y - this.radius < 0) {
+      this.y = this.radius;
+    }
+    if (this.y + this.radius > GAME_HEIGHT) {
+      this.y = GAME_HEIGHT - this.radius;
+    }
 
     // --- Off-screen check ---
     if (this.x < -this.width) {
@@ -146,7 +150,9 @@ class Enemy {
   }
 
   initiateDash(currentTime) {
-    if (this.isDashing) return;
+    if (this.isDashing) {
+      return;
+    }
     this.isDashing = true;
     this.dashEndTime = currentTime + 800; // Dash duration
   }
@@ -198,7 +204,9 @@ class Laser {
 
 // --- Update and Render Functions ---
 function update(deltaTime) { // Now accepts deltaTime
-  if (!gameRunning) return;
+  if (!gameRunning) {
+    return;
+  }
 
   updatePlayer(deltaTime);
 
@@ -216,16 +224,21 @@ function update(deltaTime) { // Now accepts deltaTime
 }
 
 function render() {
-  if (!gameRunning) return;
+  if (!gameRunning) {
+    return;
+  }
 
-  player.element.style.transform = `translate(${player.x - player.width / 2}px, ${player.y - player.height / 2}px)`;
+  player.element.style.transform = `translate(${player.x - player.width
+  / 2}px, ${player.y - player.height / 2}px)`;
 
   enemies.forEach(enemy => {
-    enemy.element.style.transform = `translate(${enemy.x - enemy.width / 2}px, ${enemy.y - enemy.height / 2}px)`;
+    enemy.element.style.transform = `translate(${enemy.x - enemy.width
+    / 2}px, ${enemy.y - enemy.height / 2}px)`;
   });
 
   lasers.forEach(laser => {
-    laser.element.style.transform = `translate(${laser.x - laser.width / 2}px, ${laser.y - laser.height / 2}px)`;
+    laser.element.style.transform = `translate(${laser.x - laser.width
+    / 2}px, ${laser.y - laser.height / 2}px)`;
   });
 }
 
@@ -254,21 +267,38 @@ function updatePlayer(deltaTime) { // Now accepts deltaTime
   const dt = deltaTime / 1000; // Convert deltaTime to seconds
 
   // State timers
-  if (player.isDashing && Date.now() >= player.dashEndTime) player.isDashing = false;
-  if (!player.canDash && Date.now() >= player.dashCooldownEndTime) player.canDash = true;
+  if (player.isDashing && Date.now()
+    >= player.dashEndTime) {
+    player.isDashing = false;
+  }
+  if (!player.canDash && Date.now()
+    >= player.dashCooldownEndTime) {
+    player.canDash = true;
+  }
   if (player.isShielding && Date.now() >= player.shieldEndTime) {
     player.isShielding = false;
     player.element.classList.remove('shielding');
   }
-  if (!player.canShoot && Date.now() >= player.shootCooldownEndTime) player.canShoot = true;
+  if (!player.canShoot && Date.now()
+    >= player.shootCooldownEndTime) {
+    player.canShoot = true;
+  }
 
   // Movement
   let targetDx = 0;
   let targetDy = 0;
-  if (keys['w'] || keys['ArrowUp']) targetDy = -PLAYER_SPEED;
-  if (keys['s'] || keys['ArrowDown']) targetDy = PLAYER_SPEED;
-  if (keys['a'] || keys['ArrowLeft']) targetDx = -PLAYER_SPEED;
-  if (keys['d'] || keys['ArrowRight']) targetDx = PLAYER_SPEED;
+  if (keys['w'] || keys['ArrowUp']) {
+    targetDy = -PLAYER_SPEED;
+  }
+  if (keys['s'] || keys['ArrowDown']) {
+    targetDy = PLAYER_SPEED;
+  }
+  if (keys['a'] || keys['ArrowLeft']) {
+    targetDx = -PLAYER_SPEED;
+  }
+  if (keys['d'] || keys['ArrowRight']) {
+    targetDx = PLAYER_SPEED;
+  }
 
   if (player.isDashing) {
     // dx/dy are set once by the dash action, will be scaled below
@@ -282,10 +312,20 @@ function updatePlayer(deltaTime) { // Now accepts deltaTime
   player.y += player.dy * dt;
 
   // Boundary checks
-  if (player.x - player.radius < 0) player.x = player.radius;
-  if (player.x + player.radius > GAME_WIDTH) player.x = GAME_WIDTH - player.radius;
-  if (player.y - player.radius < 0) player.y = player.radius;
-  if (player.y + player.radius > GAME_HEIGHT) player.y = GAME_HEIGHT - player.radius;
+  if (player.x - player.radius < 0) {
+    player.x = player.radius;
+  }
+  if (player.x + player.radius > GAME_WIDTH) {
+    player.x = GAME_WIDTH
+      - player.radius;
+  }
+  if (player.y - player.radius < 0) {
+    player.y = player.radius;
+  }
+  if (player.y + player.radius > GAME_HEIGHT) {
+    player.y = GAME_HEIGHT
+      - player.radius;
+  }
 }
 
 // --- Player Actions ---
@@ -298,11 +338,14 @@ function playerAttemptDash(currentTime) {
 
     let angle = 0;
     // Determine dash direction based on current movement keys
-    if (keys['w'] || keys['ArrowUp'] || keys['s'] || keys['ArrowDown'] || keys['a'] || keys['ArrowLeft'] || keys['d'] || keys['ArrowRight']) {
+    if (keys['w'] || keys['ArrowUp'] || keys['s'] || keys['ArrowDown']
+      || keys['a'] || keys['ArrowLeft'] || keys['d'] || keys['ArrowRight']) {
       // Calculate angle from current player.dx, player.dy to determine dash direction
       // If player is not moving, default to dashing right (or a consistent direction)
-      const currentDx = keys['d'] || keys['ArrowRight'] ? 1 : (keys['a'] || keys['ArrowLeft'] ? -1 : 0);
-      const currentDy = keys['s'] || keys['ArrowDown'] ? 1 : (keys['w'] || keys['ArrowUp'] ? -1 : 0);
+      const currentDx = keys['d'] || keys['ArrowRight'] ? 1 : (keys['a']
+      || keys['ArrowLeft'] ? -1 : 0);
+      const currentDy = keys['s'] || keys['ArrowDown'] ? 1 : (keys['w']
+      || keys['ArrowUp'] ? -1 : 0);
 
       if (currentDx === 0 && currentDy === 0) {
         // If no movement keys are pressed, dash right by default
@@ -319,7 +362,6 @@ function playerAttemptDash(currentTime) {
     player.dy = Math.sin(angle) * PLAYER_DASH_SPEED;
   }
 }
-
 
 function playerAttemptShield(currentTime) {
   if (!player.isShielding && !player.isDashing) {
@@ -339,10 +381,11 @@ function playerAttemptShoot() {
 
 // --- Collision Logic ---
 function checkCollisions() { // No currentTime needed for collision checks
-                             // Lasers vs Enemies
+  // Lasers vs Enemies
   for (let i = lasers.length - 1; i >= 0; i--) {
     for (let j = enemies.length - 1; j >= 0; j--) {
-      if (distance(lasers[i].x, lasers[i].y, enemies[j].x, enemies[j].y) < enemies[j].radius) {
+      if (distance(lasers[i].x, lasers[i].y, enemies[j].x, enemies[j].y)
+        < enemies[j].radius) {
         if (enemies[j].takeDamage(1)) {
           updateScore(enemies[j].scoreValue);
           enemies.splice(j, 1);
@@ -355,20 +398,18 @@ function checkCollisions() { // No currentTime needed for collision checks
   }
 
   // Player vs Enemies
-  if (!player.isShielding) {
-    for (let i = enemies.length - 1; i >= 0; i--) {
-      if (distance(player.x, player.y, enemies[i].x, enemies[i].y) < player.radius + enemies[i].radius) {
-        if (player.isDashing) {
-          if (enemies[i].takeDamage(100)) { // Dash destroys enemy
-            updateScore(enemies[i].scoreValue);
-            enemies.splice(i, 1);
-          }
-        } else {
-          takePlayerDamage(1);
-          if (enemies[i].takeDamage(1)) { // Player also damages enemy on collision
-            updateScore(enemies[i].scoreValue);
-            enemies.splice(i, 1);
-          }
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    if (distance(player.x, player.y, enemies[i].x, enemies[i].y) < player.radius + enemies[i].radius) {
+      if (player.isDashing || player.isShielding) {
+        if (enemies[i].takeDamage(100)) { // Dash destroys enemy
+          updateScore(enemies[i].scoreValue);
+          enemies.splice(i, 1);
+        }
+      } else {
+        takePlayerDamage(1);
+        if (enemies[i].takeDamage(1)) { // Player also damages enemy on collision
+          // updateScore(enemies[i].scoreValue);
+          enemies.splice(i, 1);
         }
       }
     }
