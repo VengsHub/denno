@@ -11,15 +11,15 @@ const restartButton = document.getElementById('restart-button');
 const GAME_WIDTH = 800;
 const GAME_HEIGHT = 600;
 
-// Player Settings
+// Player Settings (adjusted to pixels per second)
 const PLAYER_START_HP = 3;
-const PLAYER_SPEED = 4.5;
-const PLAYER_DASH_SPEED = 22;
+const PLAYER_SPEED = 4.5 * 60; // Was 4.5 pixels/frame, now approx 270 pixels/sec
+const PLAYER_DASH_SPEED = 22 * 60; // Was 22 pixels/frame, now approx 1320 pixels/sec
 const PLAYER_DASH_DURATION = 150;
 const PLAYER_DASH_COOLDOWN = 600;
 const PLAYER_SHIELD_DURATION = 1000;
 const PLAYER_SHOOT_COOLDOWN = 300;
-const PLAYER_LASER_SPEED = 15;
+const PLAYER_LASER_SPEED = 15 * 60; // Was 15 pixels/frame, now approx 900 pixels/sec
 
 // Enemy Settings
 const ENEMY_SPAWN_INTERVAL = 2200;
@@ -28,6 +28,9 @@ const ENEMY_VIDEO_SRC = 'assets/bloodcell.webm'; // ASSUMING you have an enemy v
 // --- Game State ---
 let keys = {};
 let gameRunning = true;
+let lastFrameTime = 0; // To calculate delta time
+const MIN_UPDATE_INTERVAL = 50; // Minimum time in ms between game state updates (0.1 seconds)
+
 
 let player = {
   element: playerElement,
@@ -69,12 +72,12 @@ class Enemy {
     this.height = 55;
     this.radius = 27.5;
     this.hp = 1;
-    this.baseSpeed = 1.0 + Math.random() * 0.5;
+    this.baseSpeed = (1.0 + Math.random() * 0.5) * 60; // Adjusted to pixels per second
     this.scoreValue = 15;
 
     this.isDashing = false;
     this.dashEndTime = 0;
-    this.dashSpeed = 7;
+    this.dashSpeed = 7 * 60; // Adjusted to pixels per second
     this.dashXDirection = 0;
     this.dashYDirection = 0;
 
@@ -89,7 +92,10 @@ class Enemy {
     gameContainer.appendChild(this.element);
   }
 
-  update(currentTime) {
+  update(deltaTime) { // Accept deltaTime
+    // Movement is now scaled by deltaTime (seconds)
+    const dt = deltaTime / 1000; // Convert deltaTime from milliseconds to seconds
+
     // --- Movement ---
     if (this.isDashing) {
       // Continuously re-calculate direction towards player for homing behavior
@@ -97,30 +103,32 @@ class Enemy {
       const dy = this.player.y - this.y;
       const magnitude = Math.hypot(dx, dy);
 
-      if (magnitude > 0) {
+      // Apply a small threshold to avoid division by near-zero magnitude
+      // and prevent "snail speed" or erratic movement when very close.
+      const MIN_MAGNITUDE_THRESHOLD = 0.1;
+      if (magnitude < MIN_MAGNITUDE_THRESHOLD) {
+        this.dashXDirection = -1; // Default to moving left
+        this.dashYDirection = 0;
+      } else {
         this.dashXDirection = dx / magnitude;
         this.dashYDirection = dy / magnitude;
-      } else {
-        // If enemy is on top of player, default to moving straight left
-        this.dashXDirection = -1;
-        this.dashYDirection = 0;
       }
 
-      this.x += this.dashXDirection * this.dashSpeed;
-      this.y += this.dashYDirection * this.dashSpeed;
+      this.x += this.dashXDirection * this.dashSpeed * dt;
+      this.y += this.dashYDirection * this.dashSpeed * dt;
 
-      if (currentTime >= this.dashEndTime) {
+      if (Date.now() >= this.dashEndTime) { // Using Date.now() for time checks
         this.isDashing = false;
       }
     } else {
       // Standard right-to-left movement
-      this.x -= this.baseSpeed;
+      this.x -= this.baseSpeed * dt;
 
       // Check for dash action
-      if (currentTime > this.lastActionCheck + this.actionCooldown) {
-        this.lastActionCheck = currentTime;
+      if (Date.now() > this.lastActionCheck + this.actionCooldown) { // Using Date.now() for time checks
+        this.lastActionCheck = Date.now();
         if (distance(this.x, this.y, this.player.x, this.player.y) < this.proximityTriggerDist) {
-          this.initiateDash(currentTime);
+          this.initiateDash(Date.now());
         }
       }
     }
@@ -132,7 +140,7 @@ class Enemy {
     // --- Off-screen check ---
     if (this.x < -this.width) {
       this.destroy();
-      return true; // Mark for removal from array
+      return true;
     }
     return false;
   }
@@ -141,7 +149,6 @@ class Enemy {
     if (this.isDashing) return;
     this.isDashing = true;
     this.dashEndTime = currentTime + 800; // Dash duration
-    // Direction calculation will now happen continuously in the update loop
   }
 
   takeDamage(amount) {
@@ -172,8 +179,9 @@ class Laser {
     gameContainer.appendChild(this.element);
   }
 
-  update() {
-    this.x += PLAYER_LASER_SPEED;
+  update(deltaTime) { // Accept deltaTime
+    const dt = deltaTime / 1000; // Convert deltaTime to seconds
+    this.x += PLAYER_LASER_SPEED * dt;
     if (this.x > GAME_WIDTH) {
       this.destroy();
       return true;
@@ -189,60 +197,70 @@ class Laser {
 }
 
 // --- Update and Render Functions ---
-function update(currentTime) {
+function update(deltaTime) { // Now accepts deltaTime
   if (!gameRunning) return;
 
-  // Update player based on input and state
-  updatePlayer(currentTime);
+  updatePlayer(deltaTime);
 
-  // Spawn, update, and remove enemies
-  if (currentTime - lastEnemySpawnTime > ENEMY_SPAWN_INTERVAL) {
+  if (Date.now() - lastEnemySpawnTime > ENEMY_SPAWN_INTERVAL) {
     enemies.push(new Enemy(player));
-    lastEnemySpawnTime = currentTime;
+    lastEnemySpawnTime = Date.now();
   }
-  enemies = enemies.filter(enemy => !enemy.update(currentTime));
+  // Pass deltaTime to enemy updates
+  enemies = enemies.filter(enemy => !enemy.update(deltaTime));
 
-  // Update and remove lasers
-  lasers = lasers.filter(laser => !laser.update());
+  // Pass deltaTime to laser updates
+  lasers = lasers.filter(laser => !laser.update(deltaTime));
 
-  // Check for all collisions
-  checkCollisions(currentTime);
+  checkCollisions(); // No deltaTime needed for collision checks
 }
 
 function render() {
   if (!gameRunning) return;
 
-  // Apply player position
   player.element.style.transform = `translate(${player.x - player.width / 2}px, ${player.y - player.height / 2}px)`;
 
-  // Apply enemy positions
   enemies.forEach(enemy => {
     enemy.element.style.transform = `translate(${enemy.x - enemy.width / 2}px, ${enemy.y - enemy.height / 2}px)`;
   });
 
-  // Apply laser positions
   lasers.forEach(laser => {
     laser.element.style.transform = `translate(${laser.x - laser.width / 2}px, ${laser.y - laser.height / 2}px)`;
   });
 }
 
 // --- Main Game Loop ---
-function gameLoop() {
-  update(Date.now());
+function gameLoop(currentTime) { // requestAnimationFrame provides timestamp
+  requestAnimationFrame(gameLoop); // Request next frame immediately for smooth rendering
+
+  const deltaTime = currentTime - lastFrameTime; // Calculate delta time in milliseconds
+
+  // Only update game logic if enough time has passed
+  if (deltaTime < MIN_UPDATE_INTERVAL) {
+    return;
+  }
+
+  // Cap deltaTime to avoid huge jumps if there's a very long pause (e.g., tab switch)
+  const cappedDeltaTime = Math.min(deltaTime, 1000 / 10); // Cap at 10 updates per second effectively
+
+  update(cappedDeltaTime);
   render();
-  requestAnimationFrame(gameLoop);
+
+  lastFrameTime = currentTime; // Update lastFrameTime only after a successful update
 }
 
 // --- Player Logic ---
-function updatePlayer(currentTime) {
+function updatePlayer(deltaTime) { // Now accepts deltaTime
+  const dt = deltaTime / 1000; // Convert deltaTime to seconds
+
   // State timers
-  if (player.isDashing && currentTime >= player.dashEndTime) player.isDashing = false;
-  if (!player.canDash && currentTime >= player.dashCooldownEndTime) player.canDash = true;
-  if (player.isShielding && currentTime >= player.shieldEndTime) {
+  if (player.isDashing && Date.now() >= player.dashEndTime) player.isDashing = false;
+  if (!player.canDash && Date.now() >= player.dashCooldownEndTime) player.canDash = true;
+  if (player.isShielding && Date.now() >= player.shieldEndTime) {
     player.isShielding = false;
     player.element.classList.remove('shielding');
   }
-  if (!player.canShoot && currentTime >= player.shootCooldownEndTime) player.canShoot = true;
+  if (!player.canShoot && Date.now() >= player.shootCooldownEndTime) player.canShoot = true;
 
   // Movement
   let targetDx = 0;
@@ -253,14 +271,15 @@ function updatePlayer(currentTime) {
   if (keys['d'] || keys['ArrowRight']) targetDx = PLAYER_SPEED;
 
   if (player.isDashing) {
-    // dx/dy are set once by the dash action
+    // dx/dy are set once by the dash action, will be scaled below
   } else {
     player.dx = targetDx;
     player.dy = targetDy;
   }
 
-  player.x += player.dx;
-  player.y += player.dy;
+  // Apply movement scaled by delta time
+  player.x += player.dx * dt;
+  player.y += player.dy * dt;
 
   // Boundary checks
   if (player.x - player.radius < 0) player.x = player.radius;
@@ -278,13 +297,29 @@ function playerAttemptDash(currentTime) {
     player.dashCooldownEndTime = currentTime + PLAYER_DASH_COOLDOWN;
 
     let angle = 0;
-    if ((keys['w'] || keys['ArrowUp']) || (keys['s'] || keys['ArrowDown']) || (keys['a'] || keys['ArrowLeft']) || (keys['d'] || keys['ArrowRight'])) {
-      angle = Math.atan2(player.dy, player.dx);
+    // Determine dash direction based on current movement keys
+    if (keys['w'] || keys['ArrowUp'] || keys['s'] || keys['ArrowDown'] || keys['a'] || keys['ArrowLeft'] || keys['d'] || keys['ArrowRight']) {
+      // Calculate angle from current player.dx, player.dy to determine dash direction
+      // If player is not moving, default to dashing right (or a consistent direction)
+      const currentDx = keys['d'] || keys['ArrowRight'] ? 1 : (keys['a'] || keys['ArrowLeft'] ? -1 : 0);
+      const currentDy = keys['s'] || keys['ArrowDown'] ? 1 : (keys['w'] || keys['ArrowUp'] ? -1 : 0);
+
+      if (currentDx === 0 && currentDy === 0) {
+        // If no movement keys are pressed, dash right by default
+        angle = 0;
+      } else {
+        angle = Math.atan2(currentDy, currentDx);
+      }
+    } else {
+      // If no keys are pressed at all, default dash to right
+      angle = 0;
     }
+
     player.dx = Math.cos(angle) * PLAYER_DASH_SPEED;
     player.dy = Math.sin(angle) * PLAYER_DASH_SPEED;
   }
 }
+
 
 function playerAttemptShield(currentTime) {
   if (!player.isShielding && !player.isDashing) {
@@ -303,8 +338,8 @@ function playerAttemptShoot() {
 }
 
 // --- Collision Logic ---
-function checkCollisions(currentTime) {
-  // Lasers vs Enemies
+function checkCollisions() { // No currentTime needed for collision checks
+                             // Lasers vs Enemies
   for (let i = lasers.length - 1; i >= 0; i--) {
     for (let j = enemies.length - 1; j >= 0; j--) {
       if (distance(lasers[i].x, lasers[i].y, enemies[j].x, enemies[j].y) < enemies[j].radius) {
@@ -399,7 +434,6 @@ window.addEventListener('keydown', (e) => {
     e.preventDefault();
     playerAttemptShoot();
   } else if (e.key === 'Shift') {
-    console.log('shift?');
     e.preventDefault();
     playerAttemptShield(Date.now());
   }
@@ -419,4 +453,5 @@ restartButton.addEventListener('click', () => {
 
 // --- Start Game ---
 initGame();
+// Initial call to gameLoop for requestAnimationFrame
 requestAnimationFrame(gameLoop);
