@@ -69,23 +69,19 @@ class Enemy {
     this.height = 55;
     this.radius = 27.5;
     this.hp = 1;
-    this.baseSpeed = 1.5 + Math.random() * 0.5;
+    this.baseSpeed = 1.0 + Math.random() * 0.5;
     this.scoreValue = 15;
 
-    // State for sine wave movement
-    this.initialY = this.y;
-    this.angle = Math.random() * Math.PI * 2;
-    this.frequency = 0.02 + Math.random() * 0.02;
-    this.amplitude = 20 + Math.random() * 20;
-
-    // Action state
     this.isDashing = false;
     this.dashEndTime = 0;
+    this.dashSpeed = 7;
+    this.dashXDirection = 0;
+    this.dashYDirection = 0;
+
     this.lastActionCheck = 0;
-    this.actionCooldown = 3000; // Check to dash every 3s
+    this.actionCooldown = 3000;
     this.proximityTriggerDist = 280;
 
-    // Create and append DOM element
     this.element = document.createElement('video');
     this.element.src = ENEMY_VIDEO_SRC;
     this.element.className = 'game-object enemy';
@@ -96,16 +92,29 @@ class Enemy {
   update(currentTime) {
     // --- Movement ---
     if (this.isDashing) {
-      // Dash logic continues until time is up
+      // Continuously re-calculate direction towards player for homing behavior
+      const dx = this.player.x - this.x;
+      const dy = this.player.y - this.y;
+      const magnitude = Math.hypot(dx, dy);
+
+      if (magnitude > 0) {
+        this.dashXDirection = dx / magnitude;
+        this.dashYDirection = dy / magnitude;
+      } else {
+        // If enemy is on top of player, default to moving straight left
+        this.dashXDirection = -1;
+        this.dashYDirection = 0;
+      }
+
+      this.x += this.dashXDirection * this.dashSpeed;
+      this.y += this.dashYDirection * this.dashSpeed;
+
       if (currentTime >= this.dashEndTime) {
         this.isDashing = false;
-        this.initialY = this.y; // Update baseline Y for idle move
       }
     } else {
-      // Idle movement (sine wave)
+      // Standard right-to-left movement
       this.x -= this.baseSpeed;
-      this.angle += this.frequency;
-      this.y = this.initialY + Math.sin(this.angle) * this.amplitude;
 
       // Check for dash action
       if (currentTime > this.lastActionCheck + this.actionCooldown) {
@@ -132,22 +141,14 @@ class Enemy {
     if (this.isDashing) return;
     this.isDashing = true;
     this.dashEndTime = currentTime + 800; // Dash duration
-
-    const angleToPlayer = Math.atan2(this.player.y - this.y, this.player.x - this.x);
-    const dashSpeed = 7;
-
-    // We'll just modify the position directly in the update loop
-    // For simplicity, let's just make it dash towards player.
-    // A more advanced way would be to calculate dx/dy.
-    // For now, let's make it a straight lunge left.
-    this.x -= dashSpeed * 10; // Simple lunge for now
+    // Direction calculation will now happen continuously in the update loop
   }
 
   takeDamage(amount) {
     this.hp -= amount;
     if (this.hp <= 0) {
       this.destroy();
-      return true; // Is destroyed
+      return true;
     }
     return false;
   }
@@ -175,7 +176,7 @@ class Laser {
     this.x += PLAYER_LASER_SPEED;
     if (this.x > GAME_WIDTH) {
       this.destroy();
-      return true; // Mark for removal
+      return true;
     }
     return false;
   }
@@ -309,11 +310,11 @@ function checkCollisions(currentTime) {
       if (distance(lasers[i].x, lasers[i].y, enemies[j].x, enemies[j].y) < enemies[j].radius) {
         if (enemies[j].takeDamage(1)) {
           updateScore(enemies[j].scoreValue);
-          enemies.splice(j, 1); // Remove enemy
+          enemies.splice(j, 1);
         }
         lasers[i].destroy();
-        lasers.splice(i, 1); // Remove laser
-        break; // Laser is gone, stop checking it
+        lasers.splice(i, 1);
+        break;
       }
     }
   }
@@ -398,13 +399,14 @@ window.addEventListener('keydown', (e) => {
     e.preventDefault();
     playerAttemptShoot();
   } else if (e.key === 'Shift') {
+    console.log('shift?');
     e.preventDefault();
     playerAttemptShield(Date.now());
   }
 });
 window.addEventListener('keyup', (e) => {
   keys[e.key.toLowerCase()] = false;
-  if (e.key === 'Shift') { // Turn off shield early on key release
+  if (e.key === 'Shift') {
     if (player.isShielding) {
       player.isShielding = false;
       player.element.classList.remove('shielding');
