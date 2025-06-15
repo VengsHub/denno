@@ -14,11 +14,18 @@ body {
     position: relative; /* Crucial for positioning game objects inside */
     width: 1600px;
     height: 600px;
-    background-image: url("assets/background.png");
-    background-size: cover;
     border: 2px solid #555;
     overflow: hidden; /* Objects that leave the container will be hidden */
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.game-background {
+    position: absolute;
+    top: 0;
+    width: 1801px;
+    height: 600px;
+    object-fit: cover; /* Ensures the image covers the area, cropping if aspect ratio differs */
+    will-change: transform; /* Hint to the browser for animation optimization */
 }
 
 .game-object {

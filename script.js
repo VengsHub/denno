@@ -6,9 +6,11 @@ const scoreValueElement = document.getElementById('score-value');
 const gameOverScreen = document.getElementById('game-over-screen');
 const finalScoreElement = document.getElementById('final-score');
 const restartButton = document.getElementById('restart-button');
+const background1 = document.getElementById('background-img-1');
+const background2 = document.getElementById('background-img-2');
 
 // --- Game Settings ---
-const GAME_WIDTH = 1600;
+const GAME_WIDTH = 1800;
 const GAME_HEIGHT = 600;
 
 // Player Settings (adjusted to pixels per second)
@@ -25,11 +27,16 @@ const PLAYER_LASER_SPEED = 15 * 60; // Was 15 pixels/frame, now approx 900 pixel
 const ENEMY_SPAWN_INTERVAL = 2200;
 const ENEMY_IMAGE_SRC = 'assets/bloodcell.gif'; // ASSUMING you have an enemy video file
 
+const BACKGROUND_SCROLL_SPEED = 30; // Adjust this value to control background speed
+
 // --- Game State ---
 let keys = {};
 let gameRunning = true;
 let lastFrameTime = 0; // To calculate delta time
 const MIN_UPDATE_INTERVAL = 50; // Minimum time in ms between game state updates (0.1 seconds)
+
+let bg1X = 0;
+let bg2X = GAME_WIDTH;
 
 let player = {
   element: playerElement,
@@ -212,6 +219,18 @@ function update(deltaTime) { // Now accepts deltaTime
     return;
   }
 
+  const backgroundScrollAmount = BACKGROUND_SCROLL_SPEED * (deltaTime / 1000);
+  bg1X -= backgroundScrollAmount;
+  bg2X -= backgroundScrollAmount;
+
+  // Loop background images
+  if (bg1X <= -GAME_WIDTH) {
+    bg1X += GAME_WIDTH * 2; // Move to the right of bg2
+  }
+  if (bg2X <= -GAME_WIDTH) {
+    bg2X += GAME_WIDTH * 2; // Move to the right of bg1
+  }
+
   updatePlayer(deltaTime);
 
   if (Date.now() - lastEnemySpawnTime > ENEMY_SPAWN_INTERVAL) {
@@ -231,6 +250,9 @@ function render() {
   if (!gameRunning) {
     return;
   }
+
+  background1.style.transform = `translateX(${bg1X}px)`;
+  background2.style.transform = `translateX(${bg2X}px)`;
 
   player.element.style.transform = `translate(${player.x - player.width
   / 2}px, ${player.y - player.height / 2}px)`;
