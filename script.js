@@ -23,7 +23,7 @@ const PLAYER_LASER_SPEED = 15 * 60; // Was 15 pixels/frame, now approx 900 pixel
 
 // Enemy Settings
 const ENEMY_SPAWN_INTERVAL = 2200;
-const ENEMY_VIDEO_SRC = 'assets/bloodcell.webm'; // ASSUMING you have an enemy video file
+const ENEMY_IMAGE_SRC = 'assets/bloodcell.gif'; // ASSUMING you have an enemy video file
 
 // --- Game State ---
 let keys = {};
@@ -84,10 +84,9 @@ class Enemy {
     this.actionCooldown = 3000;
     this.proximityTriggerDist = 280;
 
-    this.element = document.createElement('video');
-    this.element.src = ENEMY_VIDEO_SRC;
+    this.element = document.createElement('img');
+    this.element.src = ENEMY_IMAGE_SRC;
     this.element.className = 'game-object enemy';
-    this.element.autoplay = this.element.loop = this.element.muted = this.element.playsinline = true;
     gameContainer.appendChild(this.element);
   }
 
@@ -168,7 +167,12 @@ class Enemy {
 
   destroy() {
     if (this.element && this.element.parentNode) {
-      this.element.parentNode.removeChild(this.element);
+      this.element.style.opacity = '0'; // Start fading out
+      setTimeout(() => {
+        if (this.element && this.element.parentNode) {
+          this.element.parentNode.removeChild(this.element);
+        }
+      }, 500); // Remove after 1 second
     }
   }
 }
@@ -420,6 +424,10 @@ function checkCollisions() { // No currentTime needed for collision checks
 function takePlayerDamage(amount) {
   player.hp -= amount;
   hpValueElement.textContent = Math.max(0, player.hp);
+  player.element.classList.add('flash-red');
+  setTimeout(() => {
+    player.element.classList.remove('flash-red');
+  }, 500);
   if (player.hp <= 0) {
     endGame();
   }

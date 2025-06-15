@@ -23,47 +23,32 @@ body {
 
 .game-object {
     position: absolute;
-    /* We use transform for positioning for performance.
-       Will be set by JS: transform: translate(x, y); */
-    /* Center the transform origin */
     left: 0;
     top: 0;
-    will-change: transform; /* Hint to the browser for optimization */
+    will-change: transform, opacity;
+    opacity: 1;
+    transition: opacity 0.5s ease-out;
 }
 
 #player {
-    width: 50px;
-    height: 50px;
+    width: 40px;
+    height: 40px;
     z-index: 100;
+    border-radius: 50%;
 }
 
-/* Shield visual using a pseudo-element */
-#player::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0); /* Initially hidden */
-    width: 150%;
-    height: 150%;
-    background-color: rgba(173, 216, 230, 0.3);
-    border: 2px solid rgba(173, 216, 230, 0.7);
-    border-radius: 50%;
-    transition: transform 0.2s ease-out, opacity 0.2s ease-out;
-    opacity: 0;
-    z-index: -1;
+#player.flash-red {
+    outline: 2px dashed red;
 }
 
 #player.shielding {
-    border-radius: 50%;
-    background-color: rgba(0, 0, 255, 0.5);
+    background-color: rgba(0, 200, 255, 0.5);
 }
 
 .enemy {
     width: 55px;
     height: 55px;
     z-index: 50;
-    /* Optional filter for a 'blood cell' look */
     filter: saturate(1.5) contrast(1.1);
 }
 
